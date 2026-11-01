@@ -1,0 +1,106 @@
+name: iOS
+
+# 放在仓库根目录（GitHub Actions 只执行根目录 workflow）。
+# ios/.github/workflows/ios.yml 是副本，供只上传 ios/ 子目录时参考。
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+  pull_request:
+    paths:
+      - "ios/**"
+  workflow_dispatch:
+
+env:
+  SCHEME: DSHMobile
+  PROJECT: DSHMobile.xcodeproj
+  PROJECT_DIR: ios
+
+jobs:
+  unsigned-ipa:
+    name: Unsigned IPA (device, install via Sideloadly)
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcodegen --version
+
+      - name: Generate Xcode project
+        run: xcodegen generate --spec project.yml
+
+      - name: Build for device (no signing)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package unsigned IPA
+        run: |
+          set -euo pipefail
+          APP="build/DerivedData/Build/Products/Release-iphoneos/DSHMobile.app"
+          test -d "$APP"
+          rm -rf build/Payload build/DSHMobile-unsigned.ipa
+          mkdir -p build/Payload
+          cp -R "$APP" build/Payload/
+          cd build
+          zip -qry DSHMobile-unsigned.ipa Payload
+          ls -lh DSHMobile-unsigned.ipa
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: DSHMobile-unsigned-ipa
+          path: ios/build/DSHMobile-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+  build-simulator:
+    name: Build for iOS Simulator (unsigned)
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - run: xcodegen generate --spec project.yml
+      - name: Build (simulator)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project DSHMobile.xcodeproj \
+            -scheme DSHMobile \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+      - name: Static checks
+        working-directory: ios
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/python" -m pip install --quiet pyyaml pillow tree_sitter tree_sitter_swift
+          "$RUNNER_TEMP/venv/bin/python" scripts/static-check.py
