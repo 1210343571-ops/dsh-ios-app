@@ -1,0 +1,63 @@
+# DSH Mobile —— 原生 iOS 外壳（SwiftUI + WKWebView）
+# XcodeGen 工程描述。生成方式：`xcodegen generate`（或 ./scripts/generate-project.sh）
+# 契约见仓库根 docs/SPEC.md 第 2、6、8 节；不要在本文件里引入第三方依赖。
+name: DSHMobile
+
+options:
+  bundleIdPrefix: com.deepseek
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+  generateEmptyDirectories: false
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    # 保持最小并发检查：本项目全部 @MainActor 隔离，无需 Swift 6 严格模式。
+    SWIFT_STRICT_CONCURRENCY: minimal
+    ENABLE_USER_SCRIPT_SANDBOXING: "NO"
+    SWIFT_EMIT_LOC_STRINGS: "NO"
+    ONLY_ACTIVE_ARCH: "NO"
+    # 依赖零第三方：不声明任何 SPM / CocoaPods 依赖。
+    DEAD_CODE_STRIPPING: "YES"
+
+targets:
+  DSHMobile:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Sources
+        excludes:
+          - "Info.plist"
+    settings:
+      base:
+        PRODUCT_NAME: DSHMobile
+        PRODUCT_BUNDLE_IDENTIFIER: com.deepseek.dshmobile
+        INFOPLIST_FILE: Sources/Info.plist
+        GENERATE_INFOPLIST_FILE: "NO"
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_STYLE: Automatic
+        # 本地/CI 模拟器构建使用 CODE_SIGNING_ALLOWED=NO，无需开发者证书。
+        SWIFT_VERSION: "5.0"
+        CLANG_ENABLE_MODULES: "YES"
+        ENABLE_TESTABILITY: "YES"
+        LOCALIZATION_PREFERS_STRING_CATALOGS: "NO"
+
+schemes:
+  DSHMobile:
+    build:
+      targets:
+        DSHMobile: all
+    run:
+      config: Debug
+    profile:
+      config: Release
+    archive:
+      config: Release
