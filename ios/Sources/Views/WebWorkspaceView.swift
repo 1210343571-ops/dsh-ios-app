@@ -379,6 +379,11 @@ struct WebViewContainer: UIViewRepresentable {
                 return
             }
             components.path = "/"
+            // 工作台首次加载带上一次性令牌：网关会校验后 302 到干净 URL 并写入
+            // HttpOnly Cookie。这比在 WKWebView 里手工塞 Cookie 更可靠。
+            if let token, !token.isEmpty {
+                components.queryItems = [URLQueryItem(name: "dshm_token", value: token)]
+            }
             guard let url = components.url else {
                 controller?.setError(t("workspace.error.invalidURL"))
                 return
