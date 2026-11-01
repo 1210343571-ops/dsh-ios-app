@@ -1,0 +1,23 @@
+# Xcode / XcodeGen 生成物，不入库（唯一工程描述是 project.yml）
+*.xcodeproj/
+*.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+DerivedData/
+build/
+*.ipa
+*.dSYM
+*.dSYM.zip
+*.xcarchive
+*.xccheckout
+xcuserdata/
+*.xcscmblueprint
+
+# macOS / 编辑器
+.DS_Store
+.vscode/
+.idea/
+
+# Python 静态检查缓存
+__pycache__/
+*.pyc
+.venv/
