@@ -21,7 +21,7 @@ env:
 jobs:
   unsigned-ipa:
     name: Unsigned IPA (device, install via Sideloadly)
-    runs-on: macos-14
+    runs-on: macos-15
     defaults:
       run:
         working-directory: ios
@@ -77,7 +77,7 @@ jobs:
 
   build-simulator:
     name: Build for iOS Simulator (unsigned)
-    runs-on: macos-14
+    runs-on: macos-15
     defaults:
       run:
         working-directory: ios
